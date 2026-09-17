@@ -1,0 +1,2155 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Petualangan Katak Angka - Kelas 2 SD</title>
+  <style>
+    :root{
+      --ink:#17364a;
+      --muted:#5b7687;
+      --primary:#2f8fdd;
+      --primary-dark:#1767ad;
+      --good:#26a95c;
+      --bad:#e4535f;
+      --warm:#ffd76a;
+      --glass:rgba(255,255,255,.86);
+      --glass-strong:rgba(255,255,255,.94);
+      --shadow:0 18px 50px rgba(27,77,102,.18);
+      --nodeSize:142px;
+      --gapX:48px;
+      --gapY:72px;
+    }
+
+    *{box-sizing:border-box}
+    html,body{margin:0;padding:0}
+    body{
+      min-height:100vh;
+      font-family:ui-rounded,"Nunito","Segoe UI",Arial,sans-serif;
+      color:var(--ink);
+      background:
+        linear-gradient(rgba(242,252,255,.08), rgba(242,252,255,.10)),
+        url("asset/img/bg-game.webp") center/cover fixed no-repeat;
+      overflow-x:hidden;
+    }
+
+    button,input{font:inherit}
+    button{touch-action:manipulation}
+
+    .page-vignette{
+      position:fixed;
+      inset:0;
+      pointer-events:none;
+      background:
+        linear-gradient(180deg,rgba(255,255,255,.12),transparent 24%,transparent 74%,rgba(22,71,56,.08)),
+        radial-gradient(circle at center,transparent 52%,rgba(15,69,79,.08) 100%);
+      z-index:-1;
+    }
+
+    .app{
+      width:min(1220px,96vw);
+      margin:0 auto;
+      padding:16px 0 28px;
+    }
+
+    .hero{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:14px;
+      margin-bottom:14px;
+      padding:12px 16px;
+      border:1px solid rgba(255,255,255,.75);
+      background:rgba(255,255,255,.72);
+      backdrop-filter:blur(10px);
+      -webkit-backdrop-filter:blur(10px);
+      border-radius:26px;
+      box-shadow:0 10px 30px rgba(26,75,98,.12);
+    }
+
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      min-width:0;
+    }
+
+    .brand-frog{
+      width:68px;
+      height:68px;
+      object-fit:contain;
+      flex:0 0 auto;
+      filter:drop-shadow(0 8px 10px rgba(27,88,55,.18));
+    }
+
+    .brand h1{
+      margin:0;
+      font-size:clamp(1.4rem,3vw,2.15rem);
+      line-height:1.03;
+    }
+
+    .brand p{
+      margin:5px 0 0;
+      color:var(--muted);
+      font-weight:800;
+      font-size:clamp(.82rem,1.6vw,.98rem);
+    }
+
+    .btn{
+      min-height:52px;
+      border:0;
+      border-radius:17px;
+      padding:0 18px;
+      cursor:pointer;
+      font-weight:1000;
+      transition:transform .16s ease,box-shadow .16s ease,filter .16s ease,opacity .16s ease;
+    }
+
+    .btn:hover{filter:brightness(1.03)}
+    .btn:active{transform:translateY(2px) scale(.99)}
+    .btn:disabled{opacity:.48;cursor:not-allowed}
+
+    .btn-primary{
+      color:#fff;
+      background:linear-gradient(180deg,#59aef0,#2e8dd8);
+      box-shadow:0 9px 0 #1e6faa,0 14px 24px rgba(30,111,170,.24);
+    }
+
+    .btn-secondary{
+      color:#235f85;
+      background:#edf9ff;
+      border:2px solid rgba(93,174,222,.25);
+    }
+
+    .btn-soft{
+      color:#41697d;
+      background:rgba(255,255,255,.86);
+      border:2px solid rgba(108,163,189,.18);
+    }
+
+    .panel{
+      background:var(--glass);
+      border:1px solid rgba(255,255,255,.78);
+      border-radius:28px;
+      box-shadow:var(--shadow);
+      backdrop-filter:blur(10px);
+      -webkit-backdrop-filter:blur(10px);
+    }
+
+    .setup{
+      padding:18px;
+      display:grid;
+      grid-template-columns:repeat(3,minmax(0,1fr)) auto;
+      gap:14px;
+      align-items:end;
+      margin-bottom:16px;
+      transition:.28s ease;
+    }
+
+    .setup.hidden-game{
+      opacity:0;
+      transform:translateY(-12px);
+      pointer-events:none;
+      max-height:0;
+      overflow:hidden;
+      padding-top:0;
+      padding-bottom:0;
+      margin-bottom:0;
+      border-width:0;
+    }
+
+    .setup-card{
+      border-radius:20px;
+      padding:12px;
+      background:rgba(255,255,255,.68);
+      border:2px solid rgba(133,198,221,.18);
+    }
+
+    .setup-card label{
+      display:block;
+      text-align:center;
+      font-size:.92rem;
+      font-weight:1000;
+      margin-bottom:8px;
+      color:#365e72;
+    }
+
+    .stepper{
+      display:grid;
+      grid-template-columns:44px minmax(0,1fr) 44px;
+      gap:8px;
+      align-items:center;
+    }
+
+    .stepper button{
+      width:44px;
+      height:44px;
+      border:0;
+      border-radius:14px;
+      font-size:1.4rem;
+      font-weight:1000;
+      color:#256d9a;
+      background:#e8f7ff;
+      cursor:pointer;
+      box-shadow:inset 0 -2px 0 rgba(59,139,183,.11);
+    }
+
+    .stepper input{
+      width:100%;
+      height:48px;
+      min-width:0;
+      border:0;
+      border-radius:14px;
+      outline:none;
+      background:#fff;
+      text-align:center;
+      color:var(--ink);
+      font-size:1.35rem;
+      font-weight:1000;
+      box-shadow:0 4px 14px rgba(49,112,142,.08);
+    }
+
+    .stepper input::-webkit-inner-spin-button,
+    .stepper input::-webkit-outer-spin-button{appearance:none;margin:0}
+
+    .start-wrap{display:flex;align-items:center;height:100%}
+    .start-wrap .btn{min-height:64px;padding-inline:24px;font-size:1.03rem}
+
+    .game{
+      padding:14px;
+      background:rgba(255,255,255,.56);
+    }
+
+    .game-head{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      flex-wrap:wrap;
+      margin-bottom:10px;
+      padding:3px 4px 0;
+    }
+
+    .mission{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      min-width:0;
+    }
+
+    .mission-title{
+      font-size:clamp(1.05rem,2vw,1.35rem);
+      font-weight:1000;
+    }
+
+    .mission-sub{
+      color:var(--muted);
+      font-size:.88rem;
+      font-weight:800;
+      margin-top:2px;
+    }
+
+    .hud{
+      display:flex;
+      align-items:center;
+      gap:9px;
+      flex-wrap:wrap;
+    }
+
+    .hud-pill{
+      display:flex;
+      align-items:center;
+      gap:7px;
+      min-height:42px;
+      padding:6px 12px;
+      border-radius:999px;
+      background:rgba(255,255,255,.88);
+      border:1px solid rgba(255,255,255,.85);
+      box-shadow:0 6px 16px rgba(31,88,111,.08);
+      color:#3c667c;
+      font-weight:1000;
+    }
+
+    .hud-progress{
+      gap:9px;
+      padding:7px 14px;
+      white-space:nowrap;
+    }
+
+    .hud-progress-icon{
+      font-size:1.05rem;
+      line-height:1;
+    }
+
+    .hud-progress-label{
+      color:#54788a;
+      font-weight:900;
+    }
+
+    .hud-progress strong{
+      color:#245f7f;
+      font-size:.95rem;
+      font-weight:1000;
+      padding-left:3px;
+    }
+
+    .quest-wrap{
+      position:relative;
+      min-height:540px;
+      border-radius:26px;
+      padding:32px 22px 28px;
+      overflow:hidden;
+      background:
+        linear-gradient(180deg,rgba(255,255,255,.13),rgba(255,255,255,.05));
+      border:1px solid rgba(255,255,255,.48);
+    }
+
+    .quest-wrap::after{
+      content:"";
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      box-shadow:inset 0 0 45px rgba(255,255,255,.18);
+      border-radius:inherit;
+    }
+
+    .quest-map{
+      position:relative;
+      min-height:470px;
+      isolation:isolate;
+    }
+
+    #pathSvg{
+      position:absolute;
+      inset:0;
+      width:100%;
+      height:100%;
+      pointer-events:none;
+      overflow:visible;
+      z-index:0;
+    }
+
+    .path-base{
+      fill:none;
+      stroke:rgba(255,255,255,.86);
+      stroke-width:12;
+      stroke-linecap:round;
+      stroke-linejoin:round;
+      stroke-dasharray:5 15;
+      filter:drop-shadow(0 2px 1px rgba(63,126,139,.18));
+    }
+
+    .path-active{
+      fill:none;
+      stroke:#ffd96b;
+      stroke-width:8;
+      stroke-linecap:round;
+      stroke-linejoin:round;
+      opacity:.98;
+      filter:drop-shadow(0 2px 2px rgba(152,108,24,.16));
+    }
+
+    .quest-grid{
+      position:relative;
+      z-index:2;
+      display:grid;
+      justify-content:center;
+      align-content:start;
+      gap:var(--gapY) var(--gapX);
+      padding:28px 6px 28px;
+      min-height:470px;
+    }
+
+    .node{
+      position:relative;
+      width:var(--nodeSize);
+      height:var(--nodeSize);
+      display:grid;
+      place-items:center;
+      text-align:center;
+      transition:filter .2s ease,transform .2s ease;
+      background:transparent center/contain no-repeat;
+      overflow:visible;
+    }
+
+    .node.answer{background-image:url("asset/img/lilypad.webp")}
+    .node.answer.current{
+      background-image:url("asset/img/lilypad-active.webp");
+      transform:translateY(-3px) scale(1.04);
+      filter:drop-shadow(0 12px 15px rgba(32,108,94,.20));
+      animation:nodeBreathe 1.4s ease-in-out infinite;
+    }
+
+    .node.answer.correct{
+      background-image:url("asset/img/lilypad-correct.webp");
+      filter:drop-shadow(0 11px 14px rgba(32,108,94,.18));
+      animation:none;
+    }
+
+    .node.answer.wrong{background-image:url("asset/img/lilypad-wrong.webp");animation:shake .38s ease-in-out}
+
+    .node.start,.node.finish{
+      width:calc(var(--nodeSize) * 1.02);
+      height:calc(var(--nodeSize) * 1.02);
+    }
+
+    .node-art{
+      width:100%;
+      height:100%;
+      object-fit:contain;
+      pointer-events:none;
+      filter:drop-shadow(0 12px 14px rgba(32,85,72,.18));
+    }
+
+    .finish-stack{
+      position:relative;
+      width:100%;
+      height:100%;
+    }
+
+    .finish-island{
+      position:absolute;
+      inset:5% 0 0;
+      width:100%;
+      height:95%;
+      object-fit:contain;
+    }
+
+    .finish-treasure{
+      position:absolute;
+      left:50%;
+      top:27%;
+      width:60%;
+      height:60%;
+      transform:translateX(-50%);
+      object-fit:contain;
+      filter:drop-shadow(0 7px 9px rgba(87,58,20,.20));
+    }
+
+    .node-label{
+      position:absolute;
+      top:-11px;
+      left:50%;
+      transform:translateX(-50%);
+      z-index:10;
+      padding:5px 11px;
+      border-radius:999px;
+      white-space:nowrap;
+      color:#42697a;
+      font-size:.78rem;
+      font-weight:1000;
+      background:rgba(255,255,255,.90);
+      border:1px solid rgba(255,255,255,.92);
+      box-shadow:0 5px 12px rgba(43,95,112,.11);
+    }
+
+    .node.start .node-label,.node.finish .node-label{
+      /* Cukup dekat dengan ilustrasi, tetapi tetap berada di atas Kiko. */
+      top:-12px;
+      z-index:12;
+    }
+
+    .node.finish.win-state{
+      animation:finishGlow 1.15s ease-in-out infinite alternate;
+    }
+
+    .answer-core{
+      position:relative;
+      z-index:5;
+      display:grid;
+      place-items:center;
+      width:74%;
+      height:58%;
+      margin-top:-2px;
+    }
+
+    .node-icon{
+      position:absolute;
+      top:-6px;
+      right:2px;
+      width:32px;
+      height:32px;
+      display:grid;
+      place-items:center;
+      border-radius:50%;
+      font-size:1.18rem;
+      line-height:1;
+      font-weight:1000;
+      color:#ffffff;
+      background:transparent;
+      border:0;
+      box-shadow:none;
+      opacity:0;
+      transform:scale(.72);
+      transition:opacity .18s ease, transform .18s ease;
+      pointer-events:none;
+    }
+
+    .node.correct .node-icon{
+      opacity:1;
+      transform:scale(1);
+      background:#29b765;
+      border:3px solid rgba(255,255,255,.95);
+      box-shadow:0 5px 12px rgba(35,135,78,.28);
+    }
+
+    .node-value{
+      font-size:2rem;
+      font-weight:1000;
+      text-shadow:0 2px 0 rgba(255,255,255,.55);
+    }
+
+    .node input{
+      width:86px;
+      max-width:90%;
+      height:56px;
+      border:0;
+      outline:none;
+      border-radius:16px;
+      text-align:center;
+      color:var(--ink);
+      background:rgba(255,255,255,.72);
+      box-shadow:inset 0 0 0 2px rgba(255,255,255,.68),0 5px 12px rgba(45,105,93,.08);
+      font-size:2rem;
+      font-weight:1000;
+      transition:.18s ease;
+    }
+
+    .node.current input{
+      background:rgba(255,255,255,.91);
+      box-shadow:0 0 0 5px rgba(255,226,120,.28),0 6px 14px rgba(68,111,91,.10);
+    }
+
+    .node input:disabled{
+      opacity:1;
+      -webkit-text-fill-color:var(--ink);
+    }
+
+    .frog-actor{
+      position:absolute;
+      left:0;
+      top:0;
+      width:92px;
+      height:92px;
+      object-fit:contain;
+      z-index:7;
+      pointer-events:none;
+      transform:translate(-50%,-74%);
+      filter:drop-shadow(0 11px 9px rgba(31,83,51,.22));
+      opacity:0;
+      will-change:left,top,transform;
+    }
+
+    .frog-actor.ready{opacity:1}
+    .frog-actor.land{animation:landBounce .35s ease}
+
+    .sparkle-burst{
+      position:absolute;
+      left:50%;
+      top:48%;
+      width:150%;
+      height:150%;
+      object-fit:contain;
+      transform:translate(-50%,-50%);
+      z-index:8;
+      pointer-events:none;
+      animation:sparkleBurst .75s ease forwards;
+    }
+
+    .feedback-row{
+      display:grid;
+      grid-template-columns:auto minmax(0,1fr);
+      gap:10px;
+      align-items:center;
+      max-width:720px;
+      margin:14px auto 0;
+    }
+
+    .feedback-frog{
+      width:74px;
+      height:74px;
+      object-fit:contain;
+      filter:drop-shadow(0 8px 8px rgba(37,87,52,.14));
+    }
+
+    .speech{
+      position:relative;
+      min-height:64px;
+      display:flex;
+      align-items:center;
+      padding:12px 16px;
+      border-radius:20px;
+      background:rgba(255,255,255,.92);
+      border:2px solid rgba(255,255,255,.9);
+      box-shadow:0 8px 20px rgba(37,88,111,.10);
+      font-weight:1000;
+      line-height:1.35;
+    }
+
+    .speech::before{
+      content:"";
+      position:absolute;
+      left:-12px;
+      top:25px;
+      border-width:9px 13px 9px 0;
+      border-style:solid;
+      border-color:transparent rgba(255,255,255,.92) transparent transparent;
+    }
+
+    .speech.good{color:var(--good)}
+    .speech.bad{color:var(--bad)}
+
+    .controls{
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      flex-wrap:wrap;
+      gap:12px;
+      margin-top:20px;
+      margin-bottom:18px;
+      padding-bottom:2px;
+    }
+
+    /* Ketiga tombol kontrol harus memiliki tinggi dan baseline visual yang sama.
+       Tombol utama tidak memakai efek "balok" 3D yang membuatnya tampak turun. */
+    .controls .btn{
+      min-width:150px;
+      min-height:56px;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      margin:0;
+    }
+
+    .controls .btn-primary{
+      box-shadow:0 8px 18px rgba(30,111,170,.24);
+    }
+
+    .controls .btn-secondary,
+    .controls .btn-soft{
+      box-shadow:0 7px 16px rgba(48,103,126,.10);
+    }
+
+    .tip{
+      margin:0 auto 8px;
+      max-width:760px;
+      padding:11px 16px;
+      border-radius:16px;
+      background:rgba(255,255,255,.70);
+      border:1px dashed rgba(78,142,165,.34);
+      color:#547284;
+      text-align:center;
+      font-weight:800;
+      font-size:.91rem;
+    }
+
+    .empty{
+      min-height:310px;
+      display:grid;
+      place-items:center;
+      text-align:center;
+      padding:28px;
+    }
+
+    .empty-card{
+      max-width:550px;
+      padding:24px;
+      border-radius:26px;
+      background:rgba(255,255,255,.82);
+      box-shadow:0 12px 28px rgba(36,89,111,.12);
+    }
+
+    .empty-card img{
+      width:120px;
+      height:120px;
+      object-fit:contain;
+      margin-bottom:6px;
+    }
+
+    .empty-title{
+      font-size:1.35rem;
+      font-weight:1000;
+      margin-bottom:6px;
+    }
+
+    .empty-copy{color:var(--muted);font-weight:800;line-height:1.45}
+
+    .modal{
+      position:fixed;
+      inset:0;
+      display:none;
+      place-items:center;
+      padding:18px;
+      background:rgba(16,51,58,.42);
+      backdrop-filter:blur(5px);
+      -webkit-backdrop-filter:blur(5px);
+      z-index:30;
+    }
+
+    .modal.show{display:grid}
+
+    .modal-card{
+      position:relative;
+      width:min(500px,94vw);
+      padding:24px;
+      overflow:hidden;
+      text-align:center;
+      border-radius:32px;
+      background:rgba(255,255,255,.97);
+      box-shadow:0 28px 65px rgba(17,55,65,.28);
+      animation:modalPop .32s ease-out;
+    }
+
+    .celebration-art{
+      position:relative;
+      height:190px;
+      margin-bottom:2px;
+    }
+
+    .celebration-island{
+      position:absolute;
+      left:50%;
+      bottom:0;
+      width:190px;
+      height:150px;
+      transform:translateX(-50%);
+      object-fit:contain;
+    }
+
+    .celebration-treasure{
+      position:absolute;
+      left:56%;
+      bottom:37px;
+      width:102px;
+      height:102px;
+      object-fit:contain;
+      transform:translateX(-50%);
+    }
+
+    .celebration-frog{
+      position:absolute;
+      left:31%;
+      bottom:54px;
+      width:102px;
+      height:102px;
+      object-fit:contain;
+      transform:translateX(-50%);
+      animation:happyBounce 1s ease-in-out infinite;
+      filter:drop-shadow(0 8px 8px rgba(32,77,45,.14));
+    }
+
+    .modal h2{
+      margin:3px 0 7px;
+      font-size:clamp(1.8rem,5vw,2.35rem);
+    }
+
+    .modal p{
+      margin:0 0 16px;
+      color:var(--muted);
+      font-weight:800;
+      line-height:1.5;
+    }
+
+    .modal-stars{
+      display:flex;
+      justify-content:center;
+      gap:2px;
+      margin-bottom:10px;
+      flex-wrap:wrap;
+      max-height:66px;
+      overflow:hidden;
+    }
+
+    .modal-stars img{
+      width:32px;
+      height:32px;
+      object-fit:contain;
+      animation:starPop .35s ease both;
+    }
+
+    .confetti{
+      position:fixed;
+      width:10px;
+      height:16px;
+      border-radius:3px;
+      z-index:35;
+      pointer-events:none;
+      animation:confettiFall var(--dur,1.7s) linear forwards;
+    }
+
+    @keyframes finishGlow{
+      from{filter:drop-shadow(0 10px 12px rgba(255,210,72,.20));transform:scale(1)}
+      to{filter:drop-shadow(0 12px 22px rgba(255,202,48,.48));transform:scale(1.035)}
+    }
+
+    @keyframes nodeBreathe{
+      0%,100%{transform:translateY(-3px) scale(1.02)}
+      50%{transform:translateY(-6px) scale(1.06)}
+    }
+
+    @keyframes shake{
+      0%,100%{transform:translateX(0)}
+      20%{transform:translateX(-8px)}
+      40%{transform:translateX(8px)}
+      60%{transform:translateX(-6px)}
+      80%{transform:translateX(6px)}
+    }
+
+    @keyframes sparkleBurst{
+      0%{opacity:0;transform:translate(-50%,-50%) scale(.55) rotate(-8deg)}
+      25%{opacity:1}
+      100%{opacity:0;transform:translate(-50%,-50%) scale(1.28) rotate(7deg)}
+    }
+
+    @keyframes landBounce{
+      0%{transform:translate(-50%,-74%) scale(.92)}
+      45%{transform:translate(-50%,-78%) scale(1.07)}
+      100%{transform:translate(-50%,-74%) scale(1)}
+    }
+
+    @keyframes modalPop{
+      from{opacity:0;transform:scale(.9) translateY(12px)}
+      to{opacity:1;transform:scale(1) translateY(0)}
+    }
+
+    @keyframes happyBounce{
+      0%,100%{transform:translateX(-50%) translateY(0) rotate(-2deg)}
+      50%{transform:translateX(-50%) translateY(-10px) rotate(2deg)}
+    }
+
+    @keyframes starPop{
+      0%{transform:scale(.6);opacity:.2}
+      70%{transform:scale(1.2)}
+      100%{transform:scale(1);opacity:1}
+    }
+
+    @keyframes confettiFall{
+      0%{transform:translate3d(0,-10vh,0) rotate(0deg);opacity:1}
+      100%{transform:translate3d(var(--drift,20px),110vh,0) rotate(720deg);opacity:0}
+    }
+
+
+    /* ========================================================
+       SPLASH SCREEN
+       ======================================================== */
+    body.splash-open{
+      overflow:hidden;
+    }
+
+    .splash{
+      position:fixed;
+      inset:0;
+      z-index:9999;
+      display:grid;
+      place-items:center;
+      padding:24px;
+      background:
+        linear-gradient(rgba(255,255,255,.10),rgba(255,255,255,.18)),
+        url("asset/img/bg-game.webp") center/cover no-repeat;
+      transition:opacity .48s ease,visibility .48s ease;
+    }
+
+    .splash::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      background:
+        radial-gradient(circle at 50% 42%,rgba(255,255,255,.22),transparent 34%),
+        linear-gradient(180deg,rgba(255,255,255,.04),rgba(21,81,73,.10));
+      pointer-events:none;
+    }
+
+    .splash.hide{
+      opacity:0;
+      visibility:hidden;
+      pointer-events:none;
+    }
+
+    .splash-card{
+      position:relative;
+      width:min(620px,92vw);
+      padding:28px 28px 26px;
+      text-align:center;
+      border-radius:34px;
+      background:rgba(255,255,255,.72);
+      border:1px solid rgba(255,255,255,.86);
+      box-shadow:0 28px 70px rgba(24,73,82,.24);
+      backdrop-filter:blur(10px);
+      -webkit-backdrop-filter:blur(10px);
+      overflow:hidden;
+    }
+
+    .splash-sparkle{
+      position:absolute;
+      left:50%;
+      top:28px;
+      width:170px;
+      height:170px;
+      transform:translateX(-50%);
+      object-fit:contain;
+      opacity:.72;
+      pointer-events:none;
+      animation:splashSparkle 2.2s ease-in-out infinite;
+    }
+
+    .splash-frog{
+      position:relative;
+      z-index:2;
+      width:190px;
+      height:190px;
+      object-fit:contain;
+      margin:0 auto 4px;
+      display:block;
+      filter:drop-shadow(0 14px 12px rgba(29,83,48,.18));
+      animation:splashFloat 1.8s ease-in-out infinite;
+    }
+
+    .splash-title{
+      position:relative;
+      z-index:2;
+      margin:2px 0 8px;
+      font-size:clamp(2rem,5vw,3.2rem);
+      line-height:1.02;
+      font-weight:1000;
+      letter-spacing:-.025em;
+      color:#17364a;
+      animation:splashRise .65s .12s both;
+    }
+
+    .splash-subtitle{
+      position:relative;
+      z-index:2;
+      margin:0 auto 22px;
+      max-width:470px;
+      color:#567383;
+      font-size:clamp(.98rem,2vw,1.13rem);
+      line-height:1.5;
+      font-weight:850;
+      animation:splashRise .65s .22s both;
+    }
+
+    .splash-start{
+      position:relative;
+      z-index:2;
+      min-height:64px;
+      padding:0 34px;
+      border:0;
+      border-radius:20px;
+      color:#fff;
+      background:linear-gradient(180deg,#5eb3f1,#2f8fdd);
+      box-shadow:0 10px 24px rgba(30,111,170,.24);
+      font-size:1.08rem;
+      font-weight:1000;
+      cursor:pointer;
+      transition:transform .16s ease,box-shadow .16s ease,filter .16s ease;
+      animation:splashRise .65s .34s both;
+    }
+
+    .splash-start:hover{
+      transform:scale(1.03);
+      filter:brightness(1.03);
+      box-shadow:0 12px 28px rgba(30,111,170,.29);
+    }
+
+    .splash-start:active{
+      transform:scale(.97);
+    }
+
+    .splash-audio{
+      position:relative;
+      z-index:2;
+      margin-top:15px;
+      color:#5d7887;
+      font-size:.9rem;
+      font-weight:900;
+      animation:splashRise .65s .44s both;
+    }
+
+    @keyframes splashFloat{
+      0%,100%{transform:translateY(0) rotate(-1deg)}
+      50%{transform:translateY(-8px) rotate(1deg)}
+    }
+
+    @keyframes splashSparkle{
+      0%,100%{opacity:.45;transform:translateX(-50%) scale(.95) rotate(-4deg)}
+      50%{opacity:.85;transform:translateX(-50%) scale(1.08) rotate(4deg)}
+    }
+
+    @keyframes splashRise{
+      from{opacity:0;transform:translateY(12px)}
+      to{opacity:1;transform:translateY(0)}
+    }
+
+    @media (max-width:920px){
+      :root{--nodeSize:122px;--gapX:28px;--gapY:62px}
+      .setup{grid-template-columns:1fr 1fr}
+      .start-wrap{grid-column:1/-1}
+      .start-wrap .btn{width:100%}
+      .frog-actor{width:80px;height:80px}
+    }
+
+    @media (max-width:640px){
+      .splash{
+        padding:14px;
+      }
+
+      .splash-card{
+        width:min(94vw,520px);
+        padding:20px 18px 20px;
+        border-radius:28px;
+      }
+
+      .splash-sparkle{
+        top:18px;
+        width:130px;
+        height:130px;
+      }
+
+      .splash-frog{
+        width:145px;
+        height:145px;
+      }
+
+      .splash-title{
+        font-size:clamp(1.85rem,9vw,2.5rem);
+      }
+
+      .splash-subtitle{
+        margin-bottom:18px;
+        font-size:.96rem;
+      }
+
+      .splash-start{
+        width:min(100%,320px);
+        min-height:60px;
+        padding:0 22px;
+      }
+
+
+      :root{--nodeSize:108px;--gapX:18px;--gapY:48px}
+      body{background-attachment:scroll}
+      .app{width:97vw;padding-top:8px}
+      .hero{padding:9px 10px;border-radius:20px}
+      .brand-frog{width:54px;height:54px}
+      .brand p{display:none}
+      .hero .btn{min-height:44px;padding:0 12px}
+      .hud-progress-label{display:none}
+      .hud-progress{padding:7px 12px}
+      .setup{grid-template-columns:1fr;padding:12px}
+      .start-wrap{grid-column:auto}
+      .game{padding:8px;border-radius:22px}
+      .quest-wrap{padding:24px 7px 22px;min-height:500px}
+      .quest-map,.quest-grid{min-height:450px}
+      .quest-grid{padding-top:30px}
+      .node input{width:68px;height:48px;font-size:1.65rem;border-radius:13px}
+      .node-label{font-size:.7rem;padding:4px 8px}
+      .frog-actor{width:70px;height:70px}
+      .feedback-row{grid-template-columns:58px 1fr}
+      .feedback-frog{width:58px;height:58px}
+      .speech{font-size:.9rem}
+      .controls{
+        gap:10px;
+        margin-top:18px;
+        margin-bottom:16px;
+      }
+      .controls .btn{
+        flex:1 1 130px;
+        min-height:54px;
+        min-width:0;
+      }
+      .tip{
+        font-size:.82rem;
+        margin-bottom:6px;
+      }
+    }
+
+    @media (prefers-reduced-motion:reduce){
+      *,*::before,*::after{
+        animation-duration:.01ms !important;
+        animation-iteration-count:1 !important;
+        scroll-behavior:auto !important;
+      }
+    }
+  </style>
+</head>
+<body class="splash-open">
+  <div id="splashScreen" class="splash" role="dialog" aria-modal="true" aria-labelledby="splashTitle">
+    <div class="splash-card">
+      <img class="splash-sparkle" src="asset/img/sparkle.webp" alt="">
+      <img class="splash-frog" src="asset/img/frog-happy.webp" alt="Kiko si katak">
+
+      <h1 id="splashTitle" class="splash-title">Petualangan Katak Angka</h1>
+      <p class="splash-subtitle">Bantu Kiko melompat menuju Pulau Harta!</p>
+
+      <button id="splashStartBtn" class="splash-start" type="button">
+        ▶ Mulai Bermain
+      </button>
+
+      <div id="splashAudioText" class="splash-audio">🔊 Musik Aktif</div>
+    </div>
+  </div>
+  <div class="page-vignette"></div>
+
+  <main class="app">
+    <header class="hero">
+      <div class="brand">
+        <img class="brand-frog" src="asset/img/frog-happy.webp" alt="">
+        <div>
+          <h1>Petualangan Katak Angka</h1>
+          <p>Bantu Kiko melompat menuju Pulau Harta!</p>
+        </div>
+      </div>
+
+      <button id="musicBtn" class="btn btn-soft" type="button" aria-pressed="true" title="Hidupkan atau matikan musik">
+        🔊 Musik
+      </button>
+    </header>
+
+    <section id="setupPanel" class="panel setup">
+      <div class="setup-card">
+        <label for="startNumber">🏠 Mulai dari angka</label>
+        <div class="stepper">
+          <button type="button" data-stepper="startNumber" data-delta="-1" aria-label="Kurangi angka awal">−</button>
+          <input id="startNumber" type="number" inputmode="numeric" min="0" max="999" value="2">
+          <button type="button" data-stepper="startNumber" data-delta="1" aria-label="Tambah angka awal">+</button>
+        </div>
+      </div>
+
+      <div class="setup-card">
+        <label for="jumpCount">🐾 Mau melompat berapa kali?</label>
+        <div class="stepper">
+          <button type="button" data-stepper="jumpCount" data-delta="-1" aria-label="Kurangi jumlah lompatan">−</button>
+          <input id="jumpCount" type="number" inputmode="numeric" min="1" value="6">
+          <button type="button" data-stepper="jumpCount" data-delta="1" aria-label="Tambah jumlah lompatan">+</button>
+        </div>
+      </div>
+
+      <div class="setup-card">
+        <label for="jumpSize">➕ Setiap lompat tambah</label>
+        <div class="stepper">
+          <button type="button" data-stepper="jumpSize" data-delta="-1" aria-label="Kurangi besar lompatan">−</button>
+          <input id="jumpSize" type="number" inputmode="numeric" min="1" max="20" value="2">
+          <button type="button" data-stepper="jumpSize" data-delta="1" aria-label="Tambah besar lompatan">+</button>
+        </div>
+      </div>
+
+      <div class="start-wrap">
+        <button id="startBtn" class="btn btn-primary">▶ Mulai Petualangan</button>
+      </div>
+    </section>
+
+    <section class="panel game">
+      <div id="emptyState" class="empty">
+        <div class="empty-card">
+          <img src="asset/img/frog-idle.webp" alt="">
+          <div class="empty-title">Kiko siap berpetualang! 🐸</div>
+          <div class="empty-copy">Atur angka awal dan lompatanmu, lalu bantu Kiko sampai ke Pulau Harta.</div>
+        </div>
+      </div>
+
+      <div id="gameArea" hidden>
+        <div class="game-head">
+          <div class="mission">
+            <div>
+              <div class="mission-title">🌿 Jalan menuju Pulau Harta</div>
+              <div id="missionSub" class="mission-sub">Ayo isi daun teratai berikutnya.</div>
+            </div>
+          </div>
+
+          <div class="hud">
+            <div class="hud-pill hud-progress" aria-label="Progress perjalanan Kiko">
+              <span class="hud-progress-icon">🐸</span>
+              <span class="hud-progress-label">Perjalanan Kiko</span>
+              <strong id="stepInfo">0 / 6 lompatan</strong>
+            </div>
+          </div>
+        </div>
+
+        <div class="quest-wrap">
+          <div class="quest-map" id="questMap">
+            <svg id="pathSvg" aria-hidden="true"></svg>
+            <div id="questGrid" class="quest-grid"></div>
+            <img id="frogActor" class="frog-actor" src="asset/img/frog-idle.webp" alt="Kiko si katak">
+          </div>
+        </div>
+
+        <div class="feedback-row">
+          <img id="feedbackFrog" class="feedback-frog" src="asset/img/frog-idle.webp" alt="">
+          <div id="feedback" class="speech" role="status" aria-live="polite">
+            Ayo bantu Kiko melompat sesuai pola angkanya!
+          </div>
+        </div>
+
+        <div class="controls">
+          <button id="checkBtn" class="btn btn-primary">✓ Cek Jawaban</button>
+          <button id="restartBtn" class="btn btn-secondary">↻ Ulangi</button>
+          <button id="backBtn" class="btn btn-soft">⚙ Atur Lagi</button>
+        </div>
+
+        <div class="tip">
+          💡 Petunjuk: setiap daun bertambah <b id="jumpHint">+2</b> dari angka sebelumnya.
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <audio id="bgMusic" src="asset/audio/background.mp3" loop preload="auto"></audio>
+  <audio id="correctSfx" src="asset/audio/sfx_benar.mp3" preload="auto"></audio>
+  <audio id="winSfx" src="asset/audio/sfx_menang.mp3" preload="auto"></audio>
+
+  <div id="successModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="successTitle">
+    <div class="modal-card">
+      <div class="celebration-art">
+        <img class="celebration-island" src="asset/img/finish-island-win.webp" alt="">
+        <img class="celebration-treasure" src="asset/img/treasure-win.webp" alt="">
+        <img class="celebration-frog" src="asset/img/frog-happy.webp" alt="">
+      </div>
+
+      <div id="modalStars" class="modal-stars"></div>
+      <h2 id="successTitle">Pulau Harta Tercapai! 🎉</h2>
+      <p id="successText">Kiko berhasil menyelesaikan semua lompatan.</p>
+      <button id="playAgainBtn" class="btn btn-primary">🐸 Main Lagi</button>
+    </div>
+  </div>
+
+  <script>
+    const startNumber = document.getElementById('startNumber');
+    const jumpCount = document.getElementById('jumpCount');
+    const jumpSize = document.getElementById('jumpSize');
+
+    const setupPanel = document.getElementById('setupPanel');
+    const startBtn = document.getElementById('startBtn');
+    const checkBtn = document.getElementById('checkBtn');
+    const restartBtn = document.getElementById('restartBtn');
+    const backBtn = document.getElementById('backBtn');
+    const playAgainBtn = document.getElementById('playAgainBtn');
+
+    const emptyState = document.getElementById('emptyState');
+    const gameArea = document.getElementById('gameArea');
+    const questGrid = document.getElementById('questGrid');
+    const pathSvg = document.getElementById('pathSvg');
+    const questMap = document.getElementById('questMap');
+
+    const frogActor = document.getElementById('frogActor');
+    const feedback = document.getElementById('feedback');
+    const feedbackFrog = document.getElementById('feedbackFrog');
+    const stepInfo = document.getElementById('stepInfo');
+    const missionSub = document.getElementById('missionSub');
+    const jumpHint = document.getElementById('jumpHint');
+
+    const successModal = document.getElementById('successModal');
+    const successText = document.getElementById('successText');
+    const modalStars = document.getElementById('modalStars');
+
+    const bgMusic = document.getElementById('bgMusic');
+    const correctSfx = document.getElementById('correctSfx');
+    const winSfx = document.getElementById('winSfx');
+    const musicBtn = document.getElementById('musicBtn');
+
+    const splashScreen = document.getElementById('splashScreen');
+    const splashStartBtn = document.getElementById('splashStartBtn');
+    const splashAudioText = document.getElementById('splashAudioText');
+
+    bgMusic.volume = 0.99;
+    correctSfx.volume = 0.72;
+    winSfx.volume = 0.82;
+
+    let musicEnabled = true;
+    let state = null;
+    let resizeTimer = null;
+    let frogAnimation = null;
+    let thinkingTimer = null;
+    let gameSessionId = 0;
+
+    function clamp(v,min,max){
+      return Math.min(max,Math.max(min,v));
+    }
+
+    function readSettings(){
+      const start = clamp(parseInt(startNumber.value || '0',10),0,999);
+      const count = Math.max(1,parseInt(jumpCount.value || '1',10));
+      const size = clamp(parseInt(jumpSize.value || '1',10),1,20);
+
+      startNumber.value = start;
+      jumpCount.value = count;
+      jumpSize.value = size;
+      return {start,count,size};
+    }
+
+    function getColumns(totalNodes){
+      const w = window.innerWidth;
+      if(w <= 640) return Math.min(2,totalNodes);
+      if(w <= 920) return Math.min(3,totalNodes);
+      return Math.min(4,totalNodes);
+    }
+
+    function cancelFrogAnimations(){
+      frogActor.getAnimations().forEach(anim => {
+        try{ anim.cancel(); }catch(e){}
+      });
+      frogAnimation = null;
+      frogActor.classList.remove('land');
+    }
+
+    function resetFrogActor(hide = true){
+      cancelFrogAnimations();
+
+      if(thinkingTimer){
+        clearTimeout(thinkingTimer);
+        thinkingTimer = null;
+      }
+
+      frogActor.src = 'asset/img/frog-idle.webp';
+      frogActor.style.left = '0px';
+      frogActor.style.top = '0px';
+      frogActor.style.transform = 'translate(-50%,-74%)';
+      if(hide){
+        frogActor.classList.remove('ready');
+      }else{
+        frogActor.classList.add('ready');
+      }
+    }
+
+    function createGame(){
+      const sessionId = ++gameSessionId;
+      const {start,count,size} = readSettings();
+
+      // Bersihkan seluruh state visual/animasi dari permainan sebelumnya.
+      // Ini penting karena Web Animations dengan fill:"forwards" dapat tetap
+      // memengaruhi posisi Kiko jika tidak dibatalkan secara eksplisit.
+      resetFrogActor(true);
+
+      if(musicEnabled){
+        bgMusic.play().catch(() => {});
+      }
+
+      state = {
+        start,
+        count,
+        size,
+        current:0,
+        correct:0,
+        attempts:0,
+        totalNodes:count + 2
+      };
+
+      emptyState.hidden = true;
+      gameArea.hidden = false;
+      setupPanel.classList.add('hidden-game');
+      successModal.classList.remove('show');
+
+      checkBtn.disabled = false;
+      stepInfo.textContent = `0 / ${count} lompatan`;
+      missionSub.textContent = `Mulai dari ${start}. Setiap lompatan bertambah ${size}.`;
+      jumpHint.textContent = `+${size}`;
+
+      setFeedback('Ayo! Isi daun teratai pertama lalu tekan Cek Jawaban.', 'normal');
+      renderQuest();
+
+      // Dua frame memberi browser waktu menyelesaikan layout grid baru,
+      // sehingga posisi Rumah Kiko dihitung dari layout permainan yang baru.
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          if(sessionId !== gameSessionId || !state) return;
+          drawPaths();
+          const startNode = questGrid.querySelector('.node[data-seq="0"]');
+          positionFrogAt(startNode,true);
+
+          // Main Lagi / Ulangi selalu mengembalikan "kamera" ke Rumah Kiko.
+          centerElementInViewport(startNode,true,0.40);
+          focusCurrentInput();
+        });
+      });
+    }
+
+    function renderQuest(){
+      questGrid.innerHTML = '';
+      pathSvg.innerHTML = '';
+
+      const totalNodes = state.totalNodes;
+      const cols = getColumns(totalNodes);
+      const rows = Math.ceil(totalNodes / cols);
+
+      questGrid.style.gridTemplateColumns = `repeat(${cols},var(--nodeSize))`;
+      questGrid.style.gridTemplateRows = `repeat(${rows},var(--nodeSize))`;
+
+      for(let i=0;i<totalNodes;i++){
+        let type = 'answer';
+        if(i === 0) type = 'start';
+        else if(i === totalNodes - 1) type = 'finish';
+
+        const row = Math.floor(i/cols);
+        const within = i % cols;
+        const col = row % 2 === 0 ? within : cols - 1 - within;
+
+        const node = buildNode({index:i,type},i);
+        node.style.gridColumn = String(col + 1);
+        node.style.gridRow = String(row + 1);
+        node.dataset.seq = i;
+        questGrid.appendChild(node);
+      }
+
+      restoreCompletedNodes();
+      updateCurrentNode();
+
+      // Jika layout dirender ulang setelah misi selesai (mis. rotasi HP),
+      // pertahankan tampilan Pulau Harta dalam win state.
+      if(state.current >= state.count){
+        activateFinishWinState(false);
+      }
+    }
+
+    function buildNode(item,seq){
+      const node = document.createElement('div');
+      node.className = `node ${item.type}`;
+
+      const label = document.createElement('div');
+      label.className = 'node-label';
+
+      if(item.type === 'start'){
+        label.textContent = 'Rumah Kiko';
+        const art = document.createElement('img');
+        art.className = 'node-art';
+        art.src = 'asset/img/frog-home.webp';
+        art.alt = 'Rumah Kiko';
+        node.appendChild(art);
+      }else if(item.type === 'finish'){
+        label.textContent = 'Pulau Harta';
+
+        const stack = document.createElement('div');
+        stack.className = 'finish-stack';
+
+        const island = document.createElement('img');
+        island.className = 'finish-island';
+        island.src = 'asset/img/finish-island.webp';
+        island.alt = '';
+
+        const treasure = document.createElement('img');
+        treasure.className = 'finish-treasure';
+        treasure.src = 'asset/img/treasure.webp';
+        treasure.alt = 'Peti harta';
+
+        stack.appendChild(island);
+        stack.appendChild(treasure);
+        node.appendChild(stack);
+      }else{
+        const answerIndex = seq - 1;
+        label.textContent = `Lompatan ${answerIndex + 1}`;
+
+        const core = document.createElement('div');
+        core.className = 'answer-core';
+
+        const icon = document.createElement('div');
+        icon.className = 'node-icon';
+        icon.textContent = answerIndex < state.correct ? '✓' : '';
+
+        const input = document.createElement('input');
+        input.type = 'number';
+        input.inputMode = 'numeric';
+        input.autocomplete = 'off';
+        input.disabled = answerIndex !== state.current;
+        input.setAttribute('aria-label',`Jawaban lompatan ke-${answerIndex + 1}`);
+
+        if(state && state.answers && state.answers[answerIndex] !== undefined){
+          input.value = state.answers[answerIndex];
+        }
+
+        input.addEventListener('keydown',e => {
+          if(e.key === 'Enter' && !input.disabled){
+            checkAnswer();
+          }
+        });
+
+        core.appendChild(icon);
+        core.appendChild(input);
+        node.appendChild(core);
+      }
+
+      node.prepend(label);
+      return node;
+    }
+
+    function restoreCompletedNodes(){
+      if(!state.answers) return;
+
+      state.answers.forEach((answer,index) => {
+        const node = getAnswerNode(index);
+        const input = node?.querySelector('input');
+        if(node && input){
+          input.value = answer;
+          input.disabled = true;
+          node.classList.add('correct');
+          const icon = node.querySelector('.node-icon');
+          if(icon) icon.textContent = '✓';
+        }
+      });
+    }
+
+    function getAnswerNode(answerIndex){
+      return questGrid.querySelector(`.node[data-seq="${answerIndex + 1}"]`);
+    }
+
+    function getExpectedAnswer(answerIndex){
+      return state.start + ((answerIndex + 1) * state.size);
+    }
+
+    function updateCurrentNode(){
+      questGrid.querySelectorAll('.node.answer').forEach(node => node.classList.remove('current'));
+
+      if(state.current < state.count){
+        const node = getAnswerNode(state.current);
+        node?.classList.add('current');
+      }
+
+      stepInfo.textContent = `${state.correct} / ${state.count} lompatan`;
+
+      drawPaths();
+    }
+
+    function nodeCenter(node){
+      if(!node) return {x:0,y:0};
+      const mapRect = questMap.getBoundingClientRect();
+      const r = node.getBoundingClientRect();
+      return {
+        x:(r.left - mapRect.left) + r.width/2,
+        y:(r.top - mapRect.top) + r.height/2
+      };
+    }
+
+    function frogAnchor(node){
+      const p = nodeCenter(node);
+      if(!node) return p;
+
+      // Saat idle di start/finish, Kiko dibuat sedikit lebih rendah agar
+      // tidak menabrak label "Rumah Kiko" / "Pulau Harta".
+      if(node.classList.contains('start')){
+        return {x:p.x + 10, y:p.y + 20};
+      }
+
+      // Di finish Kiko sedikit digeser ke kiri agar peti harta tetap terlihat.
+      if(node.classList.contains('finish')){
+        return {x:p.x - 28, y:p.y + 20};
+      }
+
+      return {x:p.x, y:p.y - 5};
+    }
+
+    function prefersReducedMotion(){
+      return window.matchMedia?.('(prefers-reduced-motion: reduce)').matches === true;
+    }
+
+    function centerElementInViewport(element, forceCenter = false, targetRatio = 0.46){
+      if(!element) return;
+
+      const rect = element.getBoundingClientRect();
+      const vh = window.innerHeight || document.documentElement.clientHeight;
+      if(!vh) return;
+
+      // Area nyaman: target tidak dibiarkan terlalu dekat dengan bagian
+      // atas browser maupun area bawah layar/taskbar.
+      const safeTop = Math.max(86, vh * 0.17);
+      const safeBottom = vh - Math.max(120, vh * 0.22);
+
+      const needsMove =
+        forceCenter ||
+        rect.top < safeTop ||
+        rect.bottom > safeBottom;
+
+      if(!needsMove) return;
+
+      const absoluteCenter = window.scrollY + rect.top + (rect.height / 2);
+      const maxScroll = Math.max(0, document.documentElement.scrollHeight - vh);
+      const desired = Math.max(
+        0,
+        Math.min(maxScroll, absoluteCenter - (vh * targetRatio))
+      );
+
+      window.scrollTo({
+        top: desired,
+        behavior: prefersReducedMotion() ? 'auto' : 'smooth'
+      });
+    }
+
+    function followFrogTarget(fromNode,toNode){
+      if(!toNode) return;
+
+      if(!fromNode){
+        centerElementInViewport(toNode,true);
+        return;
+      }
+
+      const from = nodeCenter(fromNode);
+      const to = nodeCenter(toNode);
+      const movedToAnotherRow = Math.abs(to.y - from.y) > 34;
+
+      // Ketika berpindah baris, jadikan node tujuan pusat perhatian.
+      // Untuk lompatan horizontal, scroll hanya jika target mulai keluar
+      // dari area pandang yang nyaman.
+      centerElementInViewport(toNode,movedToAnotherRow);
+    }
+
+    function getIdleAssetForNode(node){
+      if(!node) return 'asset/img/frog-idle.webp';
+
+      // Quest memakai pola snake:
+      // baris 1 bergerak kiri -> kanan,
+      // baris 2 kanan -> kiri,
+      // baris 3 kiri -> kanan, dst.
+      //
+      // gridRow disimpan sebagai angka 1-based.
+      const row = Number(node.style.gridRow || 1);
+
+      return row % 2 === 0
+        ? 'asset/img/frog-idle-left.webp'
+        : 'asset/img/frog-idle.webp';
+    }
+
+    function getJumpAsset(from,to){
+      if(!from || !to) return 'asset/img/frog-jump-right.webp';
+
+      const dx = to.x - from.x;
+      const dy = to.y - from.y;
+
+      if(Math.abs(dx) >= Math.abs(dy)){
+        return dx >= 0
+          ? 'asset/img/frog-jump-right.webp'
+          : 'asset/img/frog-jump-left.webp';
+      }
+
+      return dy >= 0
+        ? 'asset/img/frog-jump-down.webp'
+        : 'asset/img/frog-jump-up.webp';
+    }
+
+    function positionFrogAt(node,immediate=false){
+      if(!node) return;
+
+      cancelFrogAnimations();
+      const p = frogAnchor(node);
+
+      frogActor.src = getIdleAssetForNode(node);
+      frogActor.style.transform = 'translate(-50%,-74%)';
+      frogActor.style.left = `${p.x}px`;
+      frogActor.style.top = `${p.y}px`;
+      frogActor.classList.add('ready');
+
+      if(!immediate){
+        frogActor.classList.remove('land');
+        void frogActor.offsetWidth;
+        frogActor.classList.add('land');
+      }
+    }
+
+    function animateFrogTo(fromNode,toNode){
+      return new Promise(resolve => {
+        if(!fromNode || !toNode){
+          positionFrogAt(toNode || fromNode,true);
+          resolve();
+          return;
+        }
+
+        cancelFrogAnimations();
+
+        const rawFrom = nodeCenter(fromNode);
+        const rawTo = nodeCenter(toNode);
+
+        // Mulai pergerakan kamera bersamaan dengan lompatan Kiko.
+        // Ini terutama terasa saat Kiko turun ke baris berikutnya.
+        followFrogTarget(fromNode,toNode);
+
+        const from = frogAnchor(fromNode);
+        const to = frogAnchor(toNode);
+        const mid = {
+          x:(from.x + to.x)/2,
+          y:(from.y + to.y)/2 - Math.max(65,Math.min(105,Math.abs(to.x-from.x)*.18 + 60))
+        };
+
+        frogActor.src = getJumpAsset(rawFrom,rawTo);
+        frogActor.classList.add('ready');
+        frogActor.style.left = `${from.x}px`;
+        frogActor.style.top = `${from.y}px`;
+        frogActor.style.transform = 'translate(-50%,-74%)';
+
+        const anim = frogActor.animate([
+          {left:`${from.x}px`,top:`${from.y}px`,transform:'translate(-50%,-74%) scale(1) rotate(0deg)'},
+          {left:`${mid.x}px`,top:`${mid.y}px`,transform:'translate(-50%,-74%) scale(1.06) rotate(-5deg)'},
+          {left:`${to.x}px`,top:`${to.y}px`,transform:'translate(-50%,-74%) scale(.98) rotate(2deg)'}
+        ],{
+          duration:620,
+          easing:'cubic-bezier(.25,.7,.28,1)',
+          fill:'forwards'
+        });
+
+        frogAnimation = anim;
+        let settled = false;
+
+        const finishPromise = () => {
+          if(settled) return;
+          settled = true;
+          resolve();
+        };
+
+        anim.onfinish = () => {
+          // Salin posisi akhir menjadi inline style, lalu CANCEL animasinya.
+          // Tanpa cancel, fill:"forwards" akan terus mengunci posisi finish
+          // dan dapat mengalahkan posisi start pada game berikutnya.
+          frogActor.style.left = `${to.x}px`;
+          frogActor.style.top = `${to.y}px`;
+          frogActor.style.transform = 'translate(-50%,-74%)';
+
+          try{ anim.cancel(); }catch(e){}
+          if(frogAnimation === anim) frogAnimation = null;
+
+          frogActor.src = state && state.current >= state.count
+            ? 'asset/img/frog-happy.webp'
+            : getIdleAssetForNode(toNode);
+
+          frogActor.classList.remove('land');
+          void frogActor.offsetWidth;
+          frogActor.classList.add('land');
+
+          // Koreksi ringan sesudah mendarat jika browser belum selesai
+          // menempatkan target di area pandang yang nyaman.
+          centerElementInViewport(toNode,false);
+          finishPromise();
+        };
+
+        anim.oncancel = () => {
+          if(frogAnimation === anim) frogAnimation = null;
+          finishPromise();
+        };
+      });
+    }
+
+    async function checkAnswer(){
+      if(!state || state.current >= state.count || checkBtn.disabled) return;
+
+      const sessionId = gameSessionId;
+      const answerIndex = state.current;
+      const node = getAnswerNode(answerIndex);
+      const input = node.querySelector('input');
+      const raw = input.value.trim();
+
+      if(raw === ''){
+        showWrong(node,'Isi angkanya dulu ya. Kiko masih menunggu! 😊');
+        return;
+      }
+
+      const answer = Number(raw);
+      const expected = getExpectedAnswer(answerIndex);
+
+      if(answer === expected){
+        checkBtn.disabled = true;
+
+        state.answers = state.answers || [];
+        state.answers[answerIndex] = answer;
+
+        node.classList.remove('wrong','current');
+        node.classList.add('correct');
+
+        const icon = node.querySelector('.node-icon');
+        if(icon) icon.textContent = '✓';
+        input.disabled = true;
+
+        state.correct++;
+        state.current++;
+
+        playCorrectSound();
+        burstSparkle(node);
+        setFeedback(
+          state.current >= state.count
+            ? 'Yeay! Semua lompatan benar. Kiko sampai ke Pulau Harta! 🎉'
+            : `Benar! Hebat! Sekarang lompat lagi +${state.size}.`,
+          'good'
+        );
+
+        const fromNode = answerIndex === 0
+          ? questGrid.querySelector('.node[data-seq="0"]')
+          : getAnswerNode(answerIndex - 1);
+
+        updateCurrentNode();
+        await animateFrogTo(fromNode,node);
+
+        if(sessionId !== gameSessionId || !state) return;
+
+        if(state.current < state.count){
+          const nextInput = getAnswerNode(state.current)?.querySelector('input');
+          if(nextInput) nextInput.disabled = false;
+          checkBtn.disabled = false;
+          focusCurrentInput();
+        }else{
+          const finishNode = questGrid.querySelector(`.node[data-seq="${state.totalNodes - 1}"]`);
+          missionSub.textContent = 'Misi selesai! Kiko berhasil menemukan harta.';
+
+          activateFinishWinState();
+          await new Promise(resolve => setTimeout(resolve,260));
+
+          if(sessionId !== gameSessionId || !state) return;
+          await animateFrogTo(node,finishNode);
+
+          if(sessionId !== gameSessionId || !state) return;
+          setTimeout(() => {
+            if(sessionId === gameSessionId && state) showSuccess();
+          },180);
+        }
+      }else{
+        state.attempts++;
+        showWrong(node,`Hmm... hampir! Ingat, setiap lompatan bertambah ${state.size}.`);
+      }
+    }
+
+    function setFeedback(message,type='normal'){
+      feedback.textContent = message;
+      feedback.className = 'speech' + (type === 'good' ? ' good' : type === 'bad' ? ' bad' : '');
+
+      if(type === 'good'){
+        feedbackFrog.src = 'asset/img/frog-happy.webp';
+      }else if(type === 'bad'){
+        feedbackFrog.src = 'asset/img/frog-thinking.webp';
+      }else{
+        feedbackFrog.src = 'asset/img/frog-idle.webp';
+      }
+    }
+
+    function showThinkingReaction(node){
+      if(!node || !state) return;
+
+      if(thinkingTimer){
+        clearTimeout(thinkingTimer);
+        thinkingTimer = null;
+      }
+
+      const sessionId = gameSessionId;
+
+      // Reaksi salah terjadi langsung pada Kiko utama di map.
+      frogActor.src = 'asset/img/frog-thinking.webp';
+
+      thinkingTimer = setTimeout(() => {
+        thinkingTimer = null;
+
+        // Jangan biarkan callback dari sesi lama mengubah Kiko
+        // setelah Restart / Main Lagi / Atur Lagi.
+        if(sessionId !== gameSessionId || !state || gameArea.hidden) return;
+
+        frogActor.src = getIdleAssetForNode(node);
+      }, 1050);
+    }
+
+    function showWrong(node,message){
+      node.classList.remove('wrong');
+      void node.offsetWidth;
+      node.classList.add('wrong');
+
+      setFeedback(message,'bad');
+      showThinkingReaction(node);
+      navigator.vibrate?.([80,40,80]);
+      playWrongSound();
+
+      const input = node.querySelector('input');
+      if(input){
+        input.focus();
+        input.select();
+      }
+
+      setTimeout(() => node.classList.remove('wrong'),560);
+    }
+
+    function burstSparkle(node){
+      const sparkle = document.createElement('img');
+      sparkle.src = 'asset/img/sparkle.webp';
+      sparkle.alt = '';
+      sparkle.className = 'sparkle-burst';
+      node.appendChild(sparkle);
+      setTimeout(() => sparkle.remove(),850);
+    }
+
+    function activateFinishWinState(withSparkle = true){
+      if(!state) return;
+
+      const finishNode = questGrid.querySelector(`.node[data-seq="${state.totalNodes - 1}"]`);
+      if(!finishNode) return;
+
+      const island = finishNode.querySelector('.finish-island');
+      const treasure = finishNode.querySelector('.finish-treasure');
+
+      if(island) island.src = 'asset/img/finish-island-win.webp';
+      if(treasure) treasure.src = 'asset/img/treasure-win.webp';
+
+      finishNode.classList.add('win-state');
+      if(withSparkle) burstSparkle(finishNode);
+    }
+
+    function showSuccess(){
+      const extra = state.attempts === 0
+        ? 'Luar biasa! Semua jawaban benar tanpa kesalahan.'
+        : `Kamu berhasil menyelesaikan ${state.count} lompatan.`;
+
+      successText.textContent = extra;
+      renderModalStars();
+      successModal.classList.add('show');
+
+      playWinSound();
+      launchConfetti();
+    }
+
+    function renderModalStars(){
+      modalStars.innerHTML = '';
+      const n = Math.min(state.count,10);
+
+      for(let i=0;i<n;i++){
+        const img = document.createElement('img');
+        img.src = 'asset/img/star.webp';
+        img.alt = '';
+        img.style.animationDelay = `${i*55}ms`;
+        modalStars.appendChild(img);
+      }
+    }
+
+    function launchConfetti(){
+      const colors = ['#ffd166','#64d8cb','#58aef0','#ff8fa3','#8bd65f','#ffffff'];
+      const total = window.innerWidth < 640 ? 42 : 68;
+
+      for(let i=0;i<total;i++){
+        const piece = document.createElement('div');
+        piece.className = 'confetti';
+        piece.style.left = `${Math.random()*100}vw`;
+        piece.style.top = `${-10 - Math.random()*20}px`;
+        piece.style.background = colors[Math.floor(Math.random()*colors.length)];
+        piece.style.setProperty('--dur',`${1.4 + Math.random()*1.5}s`);
+        piece.style.setProperty('--drift',`${-80 + Math.random()*160}px`);
+        piece.style.animationDelay = `${Math.random()*.4}s`;
+        document.body.appendChild(piece);
+        setTimeout(() => piece.remove(),3400);
+      }
+    }
+
+    function focusCurrentInput(){
+      if(!state || state.current >= state.count) return;
+      const input = getAnswerNode(state.current)?.querySelector('input');
+      if(input){
+        input.focus({preventScroll:true});
+        input.select?.();
+      }
+    }
+
+    function backToSetup(){
+      // Batalkan seluruh pekerjaan/animasi async dari sesi lama.
+      gameSessionId++;
+      resetFrogActor(true);
+
+      gameArea.hidden = true;
+      emptyState.hidden = false;
+      setupPanel.classList.remove('hidden-game');
+      successModal.classList.remove('show');
+      state = null;
+
+      setFeedback('Ayo bantu Kiko melompat sesuai pola angkanya!', 'normal');
+
+      // Setelah keluar dari permainan, jangan biarkan halaman tetap berada
+      // di posisi scroll bagian bawah map.
+      requestAnimationFrame(() => {
+        centerElementInViewport(setupPanel,true,0.34);
+      });
+    }
+
+    function restartGame(){
+      // createGame() akan membuat sesi baru dan menempatkan Kiko
+      // kembali di Rumah Kiko sebelum permainan dimulai lagi.
+      successModal.classList.remove('show');
+      createGame();
+    }
+
+    function drawPaths(){
+      if(!state) return;
+
+      const mapRect = questMap.getBoundingClientRect();
+      const nodes = [...questGrid.querySelectorAll('.node')];
+
+      pathSvg.setAttribute('viewBox',`0 0 ${mapRect.width} ${mapRect.height}`);
+      pathSvg.setAttribute('width',mapRect.width);
+      pathSvg.setAttribute('height',mapRect.height);
+      pathSvg.innerHTML = '';
+
+      for(let i=0;i<nodes.length-1;i++){
+        const a = nodes[i].getBoundingClientRect();
+        const b = nodes[i+1].getBoundingClientRect();
+
+        const x1 = (a.left-mapRect.left)+a.width/2;
+        const y1 = (a.top-mapRect.top)+a.height/2;
+        const x2 = (b.left-mapRect.left)+b.width/2;
+        const y2 = (b.top-mapRect.top)+b.height/2;
+
+        const d = buildPath(x1,y1,x2,y2);
+
+        const base = document.createElementNS('http://www.w3.org/2000/svg','path');
+        base.setAttribute('d',d);
+        base.setAttribute('class','path-base');
+
+        const active = document.createElementNS('http://www.w3.org/2000/svg','path');
+        active.setAttribute('d',d);
+        active.setAttribute('class','path-active');
+
+        const completedSegments = state.correct + (state.current >= state.count ? 1 : 0);
+        active.style.display = i < completedSegments ? 'block' : 'none';
+
+        pathSvg.appendChild(base);
+        pathSvg.appendChild(active);
+      }
+    }
+
+    function buildPath(x1,y1,x2,y2){
+      if(Math.abs(y2-y1)<10){
+        const cx=(x1+x2)/2;
+        return `M ${x1} ${y1} C ${cx} ${y1}, ${cx} ${y2}, ${x2} ${y2}`;
+      }
+
+      if(Math.abs(x2-x1)<12){
+        const my=(y1+y2)/2;
+        return `M ${x1} ${y1} C ${x1} ${my}, ${x2} ${my}, ${x2} ${y2}`;
+      }
+
+      const mx=(x1+x2)/2;
+      return `M ${x1} ${y1} C ${mx} ${y1}, ${mx} ${y2}, ${x2} ${y2}`;
+    }
+
+    function playCorrectSound(){
+      try{
+        correctSfx.currentTime = 0;
+        correctSfx.play().catch(() => {});
+      }catch(e){}
+    }
+
+    function playWinSound(){
+      try{
+        winSfx.currentTime = 0;
+        winSfx.play().catch(() => {});
+      }catch(e){}
+    }
+
+    function playWrongSound(){
+      try{
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if(!AC) return;
+
+        const ctx = new AC();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(210,ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(120,ctx.currentTime+.18);
+
+        // Volume efek jawaban salah dinaikkan agar lebih seimbang
+        // dengan sfx_benar.mp3, tetapi tetap tidak terlalu menusuk.
+        gain.gain.setValueAtTime(.50,ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+.30);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime+.18);
+        osc.onended = () => ctx.close();
+      }catch(e){}
+    }
+
+    function closeSplash(){
+      if(!splashScreen) return;
+
+      // Tombol splash adalah interaksi pertama pengguna, sehingga browser
+      // mengizinkan playback audio di sini.
+      if(musicEnabled){
+        bgMusic.play().catch(() => {});
+      }
+
+      splashScreen.classList.add('hide');
+      document.body.classList.remove('splash-open');
+
+      setTimeout(() => {
+        splashScreen.hidden = true;
+      }, 520);
+    }
+
+    function updateMusicButton(){
+      musicBtn.textContent = musicEnabled ? '🔊 Musik' : '🔇 Musik';
+      musicBtn.setAttribute('aria-pressed',String(musicEnabled));
+
+      if(splashAudioText){
+        splashAudioText.textContent = musicEnabled ? '🔊 Musik Aktif' : '🔇 Musik Nonaktif';
+      }
+    }
+
+    function toggleMusic(){
+      musicEnabled = !musicEnabled;
+
+      if(musicEnabled){
+        bgMusic.play().catch(() => {});
+      }else{
+        bgMusic.pause();
+      }
+
+      updateMusicButton();
+    }
+
+    document.querySelectorAll('[data-stepper]').forEach(btn => {
+      btn.addEventListener('click',() => {
+        const input = document.getElementById(btn.dataset.stepper);
+        const delta = Number(btn.dataset.delta || 0);
+        const min = input.min === '' ? -Infinity : Number(input.min);
+        const max = input.max === '' ? Infinity : Number(input.max);
+        const current = Number(input.value || 0);
+        input.value = clamp(current + delta,min,max);
+      });
+    });
+
+    splashStartBtn?.addEventListener('click',closeSplash);
+
+    musicBtn.addEventListener('click',toggleMusic);
+    startBtn.addEventListener('click',createGame);
+    checkBtn.addEventListener('click',checkAnswer);
+    restartBtn.addEventListener('click',restartGame);
+    backBtn.addEventListener('click',backToSetup);
+    playAgainBtn.addEventListener('click',restartGame);
+
+    successModal.addEventListener('click',e => {
+      if(e.target === successModal){
+        successModal.classList.remove('show');
+      }
+    });
+
+    [startNumber,jumpCount,jumpSize].forEach(el => {
+      el.addEventListener('keydown',e => {
+        if(e.key === 'Enter') createGame();
+      });
+    });
+
+    document.addEventListener('visibilitychange',() => {
+      bgMusic.volume = document.hidden ? .30 : .99;
+    });
+
+    window.addEventListener('resize',() => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => {
+        if(state && !gameArea.hidden){
+          const sessionId = gameSessionId;
+          renderQuest();
+          requestAnimationFrame(() => {
+            if(sessionId !== gameSessionId || !state) return;
+            drawPaths();
+
+            const target = state.current >= state.count
+              ? questGrid.querySelector(`.node[data-seq="${state.totalNodes - 1}"]`)
+              : state.current === 0
+                ? questGrid.querySelector('.node[data-seq="0"]')
+                : getAnswerNode(state.current - 1);
+
+            positionFrogAt(target,true);
+            focusCurrentInput();
+          });
+        }
+      },140);
+    });
+
+    updateMusicButton();
+  </script>
+</body>
+</html>
