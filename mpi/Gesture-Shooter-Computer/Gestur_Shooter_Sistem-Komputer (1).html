@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hand Gesture Shooting: Sistem Komputer</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Roboto:wght@500;700&display=swap');
+
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden;
+            background-color: #111; font-family: 'Roboto', sans-serif; user-select: none;
+        }
+
+        #gameCanvas {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2;
+        }
+
+        /* Video disembunyikan karena dirender manual di Canvas */
+        #webcam { display: none; }
+
+        /* Modal Panduan & Game Over */
+        .overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(10, 15, 30, 0.9); z-index: 10;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            color: #fff; text-align: center;
+        }
+        
+        .modal-box {
+            background: linear-gradient(145deg, #1e2540, #151a2e);
+            border: 4px solid #4deeea; border-radius: 20px;
+            padding: 40px; max-width: 600px; width: 90%;
+            box-shadow: 0 0 30px rgba(77, 238, 234, 0.4);
+        }
+
+        .modal-box h1 {
+            font-family: 'Fredoka One', cursive; color: #f0f6f0;
+            font-size: 32px; margin-top: 0; text-shadow: 2px 2px 0px #ff0055, 4px 4px 0px #000;
+        }
+
+        .guide-step {
+            display: flex; align-items: center; margin: 20px 0; background: rgba(0,0,0,0.3);
+            padding: 15px; border-radius: 10px; border-left: 5px solid #ffaa00; text-align: left;
+        }
+
+        .guide-icon { font-size: 30px; margin-right: 20px; min-width: 40px; text-align: center; }
+        .guide-text h3 { margin: 0 0 5px 0; color: #4deeea; font-size: 18px; }
+        .guide-text p { margin: 0; font-size: 14px; color: #ccc; }
+
+        .btn {
+            font-family: 'Fredoka One', cursive; font-size: 24px;
+            background: linear-gradient(90deg, #ff0055, #ffaa00);
+            color: white; border: none; border-radius: 10px;
+            padding: 15px 40px; margin-top: 20px; cursor: pointer;
+            box-shadow: 0 5px 0px #990033; transition: all 0.1s;
+        }
+        .btn:active { transform: translateY(5px); box-shadow: 0 0px 0px #990033; }
+
+        .hidden { display: none !important; }
+
+        #errorMsg { color: #ff5555; margin-top: 15px; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <video id="webcam" autoplay playsinline></video>
+    <canvas id="gameCanvas"></canvas>
+
+    <!-- Modal Panduan (Gesture Guide) -->
+    <div id="guideModal" class="overlay">
+        <div class="modal-box">
+            <h1>SISTEM KOMPUTER<br>GESTURE SHOOTER</h1>
+            
+            <div class="guide-step">
+                <div class="guide-icon">👆</div>
+                <div class="guide-text">
+                    <h3>1. Membidik (Aim)</h3>
+                    <p>Luruskan jari telunjuk ke arah kamera untuk menggerakkan bidikan sasaran.</p>
+                </div>
+            </div>
+            <div class="guide-step">
+                <div class="guide-icon">👍</div>
+                <div class="guide-text">
+                    <h3>2. Siap Menembak (READY)</h3>
+                    <p>Biarkan ibu jari terbuka. Indikator "READY" hijau akan menyala.</p>
+                </div>
+            </div>
+            <div class="guide-step">
+                <div class="guide-icon">✊</div>
+                <div class="guide-text">
+                    <h3>3. Tembak & Isi Ulang (SHOOT & RELOAD)</h3>
+                    <p>Kepalkan/turunkan ibu jari untuk <b>MENEMBAK</b> target. Angkat lagi ibu jari untuk <b>RELOAD</b>.</p>
+                </div>
+            </div>
+            
+            <p style="color: #ffaa00; font-size: 14px; margin-top: 20px;">
+                Aturan: Jawab sebelum waktu habis! Nyawa akan berkurang jika salah tembak atau kehabisan waktu.
+            </p>
+            <p id="loadingText" style="color: #4deeea; font-weight: bold;">Memuat Modul AI...</p>
+            <button id="startBtn" class="btn hidden">MULAI BERMAIN</button>
+            <div id="errorMsg"></div>
+        </div>
+    </div>
+
+    <!-- Modal Game Over -->
+    <div id="gameOverModal" class="overlay hidden">
+        <div class="modal-box" style="text-align: center;">
+            <h1 id="gameOverTitle">PERMAINAN SELESAI</h1>
+            <h2 style="font-size: 40px; color: #4deeea; margin: 20px 0;">Skor Akhir: <span id="finalScore">0</span></h2>
+            <p id="gameOverMsg" style="margin-bottom: 30px; font-size: 18px; color: #ccc;"></p>
+            <button id="restartBtn" class="btn">MAIN LAGI</button>
+        </div>
+    </div>
+
+    <!-- Pemuatan Library MediaPipe Hands dari CDN Resmi -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+
+    <script>
+        /* ==========================================
+           1. KONTEN SOAL (INFORMATIKA SMP KLS VII)
+           ========================================== */
+        const questions = [
+            { q: "Perangkat keras yang berfungsi sebagai 'otak' komputer adalah?", options: ["CPU", "RAM", "Harddisk", "Monitor"], answer: "CPU" },
+            { q: "Mana yang merupakan perangkat masukan (Input Device)?", options: ["Printer", "Proyektor", "Mouse", "Speaker"], answer: "Mouse" },
+            { q: "Memori yang sifatnya sementara dan datanya hilang jika komputer mati:", options: ["ROM", "Flashdisk", "RAM", "Harddisk"], answer: "RAM" },
+            { q: "Perangkat lunak yang mengatur seluruh hardware & software disebut?", options: ["Aplikasi", "Sistem Operasi", "Antivirus", "Bahasa Pemrograman"], answer: "Sistem Operasi" },
+            { q: "Bagian CPU yang bertugas menghitung operasi logika & aritmatika:", options: ["Control Unit", "Register", "ALU", "Cache"], answer: "ALU" },
+            { q: "Contoh dari perangkat lunak aplikasi (Application Software) adalah:", options: ["Windows 11", "Linux", "Microsoft Word", "BIOS"], answer: "Microsoft Word" },
+            { q: "Siklus pengolahan data pada sistem komputer yang benar adalah:", options: ["Proses > Input > Output", "Input > Proses > Output", "Output > Proses > Input", "Input > Output > Proses"], answer: "Input > Proses > Output" },
+            { q: "Hardware yang menampilkan hasil proses komputer secara visual:", options: ["Monitor", "Keyboard", "Scanner", "Microphone"], answer: "Monitor" },
+            { q: "Media penyimpanan data permanen berkapasitas besar di PC:", options: ["RAM", "Prosesor", "VGA Card", "Harddisk"], answer: "Harddisk" },
+            { q: "Perangkat yang menghubungkan komputer ke jaringan internet:", options: ["Sound Card", "Modem/Router", "Printer", "Power Supply"], answer: "Modem/Router" }
+        ];
+
+        /* ==========================================
+           2. VARIABEL GAME & STATE
+           ========================================== */
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const video = document.getElementById('webcam');
+        let width, height;
+
+        let gameState = 'START'; // START, PLAYING, GAMEOVER
+        let score = 0;
+        let lives = 3;
+        let currentQuestion = 0;
+        let timer = 0;
+        let lastTime = 0;
+        const timeLimit = 15; // 15 detik per soal
+
+        // Mekanik Pointer & LERP
+        let pointer = { x: 0, y: 0, targetX: 0, targetY: 0 };
+        const lerpFactor = 0.25;
+
+        // Mekanik Gestur
+        let gestureState = 'RELOAD'; // RELOAD -> READY -> SHOOT -> RELOAD
+        let targets = [];
+        let particles = [];
+        let screenShake = 0;
+        let muzzleFlash = 0;
+        let feedbackText = { text: '', alpha: 0, color: '' };
+
+        // Sistem Audio Sintetis (Web Audio API)
+        let audioCtx;
+        function initAudio() {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+
+        function playSound(type) {
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            const now = audioCtx.currentTime;
+            
+            if (type === 'shoot') {
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(120, now);
+                osc.frequency.exponentialRampToValueAtTime(0.01, now + 0.15);
+                gain.gain.setValueAtTime(0.5, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+                osc.start(now); osc.stop(now + 0.15);
+            } else if (type === 'correct') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(523.25, now); // C5
+                osc.frequency.setValueAtTime(659.25, now + 0.1); // E5
+                osc.frequency.setValueAtTime(783.99, now + 0.2); // G5
+                gain.gain.setValueAtTime(0.4, now);
+                gain.gain.linearRampToValueAtTime(0, now + 0.4);
+                osc.start(now); osc.stop(now + 0.4);
+            } else if (type === 'wrong') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(200, now);
+                osc.frequency.linearRampToValueAtTime(100, now + 0.3);
+                gain.gain.setValueAtTime(0.5, now);
+                gain.gain.linearRampToValueAtTime(0, now + 0.3);
+                osc.start(now); osc.stop(now + 0.3);
+            }
+        }
+
+        /* ==========================================
+           3. INISIALISASI GAME & RESIZE
+           ========================================== */
+        function resize() {
+            width = window.innerWidth;
+            height = window.innerHeight;
+            canvas.width = width;
+            canvas.height = height;
+            pointer.x = width / 2;
+            pointer.y = height / 2;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        function loadQuestion() {
+            if (currentQuestion >= questions.length) {
+                endGame(true);
+                return;
+            }
+            targets = [];
+            const q = questions[currentQuestion];
+            let opts = [...q.options];
+            shuffleArray(opts);
+
+            // Mengatur posisi 4 target pilihan (Grid 2x2)
+            const marginX = width * 0.2;
+            const marginY = height * 0.35;
+            const gapX = width * 0.6;
+            const gapY = height * 0.35;
+            
+            const positions = [
+                { x: marginX, y: marginY },
+                { x: marginX + gapX, y: marginY },
+                { x: marginX, y: marginY + gapY },
+                { x: marginX + gapX, y: marginY + gapY }
+            ];
+
+            for (let i = 0; i < 4; i++) {
+                targets.push({
+                    x: positions[i].x,
+                    y: positions[i].y,
+                    w: Math.min(250, width * 0.35),
+                    h: Math.min(100, height * 0.15),
+                    text: opts[i],
+                    isCorrect: opts[i] === q.answer,
+                    active: true,
+                    scale: 0 // Untuk animasi pop-in
+                });
+            }
+            timer = timeLimit;
+        }
+
+        function startGame() {
+            initAudio();
+            document.getElementById('guideModal').classList.add('hidden');
+            document.getElementById('gameOverModal').classList.add('hidden');
+            score = 0;
+            lives = 3;
+            currentQuestion = 0;
+            gameState = 'PLAYING';
+            lastTime = performance.now();
+            particles = [];
+            feedbackText.alpha = 0;
+            loadQuestion();
+        }
+
+        function endGame(isWin) {
+            gameState = 'GAMEOVER';
+            document.getElementById('gameOverModal').classList.remove('hidden');
+            document.getElementById('finalScore').innerText = score;
+            document.getElementById('gameOverTitle').innerText = isWin ? "LUAR BIASA! 🎉" : "GAME OVER 💀";
+            document.getElementById('gameOverMsg').innerText = isWin ? "Kamu telah menyelesaikan semua soal Sistem Komputer!" : "Nyawa kamu habis. Coba lagi!";
+        }
+
+        document.getElementById('startBtn').addEventListener('click', startGame);
+        document.getElementById('restartBtn').addEventListener('click', startGame);
+
+        /* ==========================================
+           4. MEKANIK PARTIKEL & EFEK
+           ========================================== */
+        function createExplosion(x, y, isCorrect) {
+            const color = isCorrect ? '#4deeea' : '#ff0055';
+            for (let i = 0; i < 20; i++) {
+                particles.push({
+                    x: x, y: y,
+                    vx: (Math.random() - 0.5) * 15,
+                    vy: (Math.random() - 0.5) * 15,
+                    life: 1.0,
+                    color: color
+                });
+            }
+            screenShake = 15;
+            feedbackText = {
+                text: isCorrect ? "BENAR! +100" : "SALAH! -1 Nyawa",
+                alpha: 1.0,
+                color: color
+            };
+        }
+
+        function updateEffects() {
+            // Update Particles
+            for (let i = particles.length - 1; i >= 0; i--) {
+                let p = particles[i];
+                p.x += p.vx; p.y += p.vy; p.life -= 0.03;
+                if (p.life <= 0) particles.splice(i, 1);
+            }
+            if (screenShake > 0) screenShake--;
+            if (muzzleFlash > 0) muzzleFlash -= 0.1;
+            if (feedbackText.alpha > 0) feedbackText.alpha -= 0.02;
+        }
+
+        /* ==========================================
+           5. LOGIKA TEMBAKAN
+           ========================================== */
+        function checkHit() {
+            playSound('shoot');
+            muzzleFlash = 1.0;
+            screenShake = 5;
+
+            let hit = false;
+            for (let t of targets) {
+                if (!t.active) continue;
+                // Collision Detection: Bounding Box. Koordinat target berada di pusat (center)
+                const left = t.x - t.w / 2;
+                const right = t.x + t.w / 2;
+                const top = t.y - t.h / 2;
+                const bottom = t.y + t.h / 2;
+
+                if (pointer.x >= left && pointer.x <= right && pointer.y >= top && pointer.y <= bottom) {
+                    hit = true;
+                    t.active = false;
+                    if (t.isCorrect) {
+                        score += 100;
+                        playSound('correct');
+                        createExplosion(t.x, t.y, true);
+                        setTimeout(() => {
+                            if (gameState === 'PLAYING') { currentQuestion++; loadQuestion(); }
+                        }, 1000);
+                    } else {
+                        lives--;
+                        playSound('wrong');
+                        createExplosion(t.x, t.y, false);
+                        if (lives <= 0) {
+                            setTimeout(() => endGame(false), 1000);
+                        }
+                    }
+                    break;
+                }
+            }
+        }
+
+        /* ==========================================
+           6. RENDER LOOP UTAMA (requestAnimationFrame)
+           ========================================== */
+        function renderLoop(now) {
+            requestAnimationFrame(renderLoop);
+
+            // Bersihkan Canvas
+            ctx.clearRect(0, 0, width, height);
+
+            // Render Latar Belakang Video (Mirrored) jika tersedia
+            if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                ctx.save();
+                ctx.scale(-1, 1);
+                ctx.drawImage(video, -width, 0, width, height);
+                ctx.restore();
+                
+                // Tambahkan overlay gelap agar UI lebih terbaca
+                ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
+                ctx.fillRect(0, 0, width, height);
+            }
+
+            if (gameState !== 'PLAYING') return;
+
+            // Logika Timer
+            const deltaTime = (now - lastTime) / 1000;
+            lastTime = now;
+            timer -= deltaTime;
+            
+            if (timer <= 0) {
+                lives--;
+                playSound('wrong');
+                feedbackText = { text: "WAKTU HABIS!", alpha: 1.0, color: "#ffaa00" };
+                currentQuestion++;
+                if (lives <= 0) {
+                    endGame(false);
+                } else {
+                    loadQuestion();
+                }
+            }
+
+            updateEffects();
+
+            // Efek Screen Shake
+            ctx.save();
+            if (screenShake > 0) {
+                const dx = (Math.random() - 0.5) * screenShake;
+                const dy = (Math.random() - 0.5) * screenShake;
+                ctx.translate(dx, dy);
+            }
+
+            // HUD Atas
+            ctx.fillStyle = 'rgba(20, 25, 45, 0.8)';
+            ctx.beginPath(); ctx.roundRect(width/2 - 350, 15, 700, 60, 30); ctx.fill();
+            
+            ctx.font = 'bold 20px Roboto';
+            ctx.fillStyle = '#fff';
+            ctx.textAlign = 'left';
+            ctx.fillText(`SCORE: ${score}`, width/2 - 320, 52);
+            
+            // Timer Bar
+            ctx.fillStyle = '#333';
+            ctx.fillRect(width/2 - 150, 35, 300, 15);
+            ctx.fillStyle = timer > 5 ? '#4deeea' : '#ff0055';
+            ctx.fillRect(width/2 - 150, 35, (timer / timeLimit) * 300, 15);
+            
+            // Lives
+            ctx.textAlign = 'right';
+            let hearts = "";
+            for(let i=0; i<3; i++) hearts += i < lives ? "❤️ " : "🖤 ";
+            ctx.fillText(hearts, width/2 + 320, 52);
+
+            // Progress Pertanyaan
+            ctx.textAlign = 'center';
+            ctx.fillStyle = '#ffaa00';
+            ctx.fillText(`Soal ${currentQuestion + 1} / ${questions.length}`, width/2, 100);
+
+            // Teks Pertanyaan
+            ctx.font = 'bold 26px Roboto';
+            ctx.fillStyle = '#fff';
+            ctx.shadowColor = '#000';
+            ctx.shadowBlur = 10;
+            ctx.fillText(questions[currentQuestion].q, width/2, 140);
+            ctx.shadowBlur = 0; // reset shadow
+
+            // Render Target (Pilihan Jawaban)
+            for (let t of targets) {
+                if (!t.active) continue;
+                if (t.scale < 1) t.scale += 0.1; // Animasi pop-in
+
+                ctx.save();
+                ctx.translate(t.x, t.y);
+                ctx.scale(t.scale, t.scale);
+
+                // Kotak Target
+                ctx.fillStyle = 'rgba(30, 40, 70, 0.9)';
+                ctx.strokeStyle = '#4deeea';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.roundRect(-t.w/2, -t.h/2, t.w, t.h, 15);
+                ctx.fill();
+                ctx.stroke();
+
+                // Teks Jawaban
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 22px Roboto';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                // Word wrap sederhana jika panjang
+                if (t.text.length > 20) {
+                    ctx.font = 'bold 18px Roboto';
+                }
+                ctx.fillText(t.text, 0, 0);
+                ctx.restore();
+            }
+
+            // Render Partikel
+            for (let p of particles) {
+                ctx.globalAlpha = p.life;
+                ctx.fillStyle = p.color;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, 5, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            ctx.globalAlpha = 1.0;
+
+            // Render Feedback Text
+            if (feedbackText.alpha > 0) {
+                ctx.globalAlpha = feedbackText.alpha;
+                ctx.font = 'bold 40px "Fredoka One", cursive';
+                ctx.fillStyle = feedbackText.color;
+                ctx.textAlign = 'center';
+                ctx.strokeStyle = '#000';
+                ctx.lineWidth = 6;
+                ctx.strokeText(feedbackText.text, width/2, height/2);
+                ctx.fillText(feedbackText.text, width/2, height/2);
+                ctx.globalAlpha = 1.0;
+            }
+
+            ctx.restore(); // Akhir Screen Shake
+
+            // Lerp Pointer Posisi (Membuat gerakan bidikan sangat halus/tidak jitter)
+            pointer.x += (pointer.targetX - pointer.x) * lerpFactor;
+            pointer.y += (pointer.targetY - pointer.y) * lerpFactor;
+
+            // Render Crosshair (Bidikan)
+            ctx.save();
+            ctx.translate(pointer.x, pointer.y);
+            
+            if (muzzleFlash > 0) {
+                ctx.globalAlpha = muzzleFlash;
+                ctx.fillStyle = '#ffaa00';
+                ctx.beginPath();
+                ctx.arc(0, 0, 30 + (1-muzzleFlash)*20, 0, Math.PI*2);
+                ctx.fill();
+                ctx.globalAlpha = 1.0;
+            }
+
+            // Desain Crosshair Arcade
+            const colorCross = gestureState === 'READY' ? '#00ff00' : (gestureState === 'SHOOT' ? '#ff0000' : '#ffff00');
+            ctx.strokeStyle = colorCross;
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.arc(0, 0, 20, 0, Math.PI*2);
+            ctx.moveTo(-30, 0); ctx.lineTo(-10, 0);
+            ctx.moveTo(30, 0); ctx.lineTo(10, 0);
+            ctx.moveTo(0, -30); ctx.lineTo(0, -10);
+            ctx.moveTo(0, 30); ctx.lineTo(0, 10);
+            ctx.stroke();
+            
+            // Render Status Gesture
+            ctx.fillStyle = colorCross;
+            ctx.font = 'bold 16px Roboto';
+            ctx.textAlign = 'center';
+            ctx.fillText(gestureState, 0, -40);
+            
+            ctx.restore();
+        }
+        
+        requestAnimationFrame(renderLoop);
+
+        /* ==========================================
+           7. MEDIAPIPE HANDS - LOGIKA DETEKSI GESTUR
+           ========================================== */
+        const hands = new window.Hands({locateFile: (file) => {
+            return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
+        }});
+
+        hands.setOptions({
+            maxNumHands: 1,
+            modelComplexity: 1,
+            minDetectionConfidence: 0.65,
+            minTrackingConfidence: 0.65
+        });
+
+        hands.onResults((results) => {
+            if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+                const landmarks = results.multiHandLandmarks[0];
+                
+                // 1. Dapatkan posisi Ujung Telunjuk (Index Fingertip - landmark 8)
+                const indexTip = landmarks[8];
+                // Mapping koordinat kamera (0-1) ke layar dengan pencerminan (mirroring)
+                pointer.targetX = (1 - indexTip.x) * width;
+                pointer.targetY = indexTip.y * height;
+
+                // 2. Deteksi Gestur Tembakan (Ibu Jari Diturunkan / Ditekuk)
+                // Mengukur jarak antara ujung ibu jari (landmark 4) dengan pangkal telunjuk (landmark 5)
+                const thumbTip = landmarks[4];
+                const indexMcp = landmarks[5];
+                // Rumus jarak euclidean sederhana
+                const dist = Math.hypot(thumbTip.x - indexMcp.x, thumbTip.y - indexMcp.y);
+
+                // Threshold gestur (perlu disesuaikan jika tangan terlalu dekat/jauh dari kamera, 
+                // angka 0.10 dan 0.06 relatif stabil di ukuran normal).
+                const RELOAD_THRESHOLD = 0.12; 
+                const SHOOT_THRESHOLD = 0.07;
+
+                if (dist > RELOAD_THRESHOLD && gestureState === 'RELOAD') {
+                    // Ibu jari terangkat (rileks), aktifkan status READY
+                    gestureState = 'READY';
+                } 
+                else if (dist < SHOOT_THRESHOLD && gestureState === 'READY') {
+                    // Ibu jari turun/mengepal, aktifkan tembakan
+                    gestureState = 'SHOOT';
+                    if (gameState === 'PLAYING') {
+                        checkHit();
+                    }
+                    // Wajib direload (angkat ibu jari) sebelum bisa tembak lagi
+                    gestureState = 'RELOAD'; 
+                }
+            }
+        });
+
+        /* ==========================================
+           8. MANAJEMEN WEBCAM & STARTUP
+           ========================================== */
+        async function startCameraSystem() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: 'user', width: {ideal: 1280}, height: {ideal: 720} }
+                });
+                video.srcObject = stream;
+                video.play();
+
+                // Fungsi loop untuk mengirim frame video ke MediaPipe
+                async function processVideo() {
+                    if (!video.paused && !video.ended) {
+                        await hands.send({image: video});
+                    }
+                    requestAnimationFrame(processVideo);
+                }
+                
+                video.onloadeddata = () => {
+                    processVideo();
+                    document.getElementById('loadingText').classList.add('hidden');
+                    document.getElementById('startBtn').classList.remove('hidden');
+                };
+            } catch (err) {
+                console.error("Camera Error: ", err);
+                document.getElementById('loadingText').classList.add('hidden');
+                document.getElementById('errorMsg').innerHTML = "Gagal mengakses Kamera!<br>Pastikan Anda memberikan izin kamera pada browser.";
+            }
+        }
+
+        // Inisialisasi awal MediaPipe AI (dummy trigger untuk mendownload model)
+        hands.initialize().then(() => {
+            startCameraSystem();
+        });
+
+    </script>
+</body>
+</html>
